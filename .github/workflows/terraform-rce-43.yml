@@ -1,0 +1,55 @@
+name: terraform-rce-43
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - 'terraform/rce-43/**'
+      - '.github/workflows/terraform-rce-43.yml'
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  terraform:
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: terraform/rce-43
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Configure AWS credentials from GitHub OIDC
+        uses: aws-actions/configure-aws-credentials@v6.0.0
+        with:
+          aws-region: eu-west-1
+          role-to-assume: arn:aws:iam::428516841589:role/gha-oidc-aws-terraform-infrastructure-main
+          role-session-name: ${{ github.run_id }}
+          allowed-account-ids: 428516841589
+
+      - name: Verify AWS identity
+        run: aws sts get-caller-identity
+
+      - name: Terraform format check
+        run: terraform fmt -check
+
+      - name: Terraform init
+        run: terraform init
+
+      - name: Terraform validate
+        run: terraform validate
+
+      - name: Terraform plan
+        run: terraform plan -out=tfplan
+
+      - name: Terraform apply
+        run: terraform apply -auto-approve tfplan
