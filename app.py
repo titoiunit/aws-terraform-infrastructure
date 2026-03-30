@@ -1,21 +1,28 @@
+import os
 from flask import Flask, jsonify
 
 app = Flask(__name__)
+
+APP_ENV = os.getenv("APP_ENV", "dev")
 
 
 @app.get("/")
 def home():
     return jsonify(
-        message="Hello from the RCE-44 Python app",
+        message="Hello from the multi-environment RCE-45 Python app",
         repo="aws-terraform-infrastructure",
         owner="titoiunit",
-        task="RCE-44"
+        task="RCE-45",
+        environment=APP_ENV
     )
 
 
 @app.get("/health")
 def health():
-    return jsonify(status="ok")
+    return jsonify(
+        status="ok",
+        environment=APP_ENV
+    )
 
 
 if __name__ == "__main__":
