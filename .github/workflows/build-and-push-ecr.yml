@@ -2,6 +2,15 @@ name: Build and Push Python App to Amazon ECR
 
 on:
   workflow_dispatch:
+    inputs:
+      environment:
+        description: "Choose the target environment"
+        required: true
+        type: choice
+        options:
+          - dev
+          - qa
+          - prod
   push:
     branches:
       - main
@@ -23,18 +32,54 @@ jobs:
 
     env:
       AWS_REGION: eu-west-1
-      ECR_REPOSITORY: aws-terraform-infrastructure-python-app
 
     steps:
+      - name: Select target environment
+        id: select-environment
+        run: |
+          if [ "${{ github.event_name }}" = "push" ]; then
+            echo "selected_env=dev" >> "$GITHUB_OUTPUT"
+          else
+            echo "selected_env=${{ inputs.environment }}" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Set environment-specific values
+        id: env-values
+        run: |
+          case "${{ steps.select-environment.outputs.selected_env }}" in
+            dev)
+              echo "app_env=dev" >> "$GITHUB_OUTPUT"
+              echo "aws_role_arn=arn:aws:iam::428516841589:role/github-actions-oidc-aws-terraform-infrastructure-dev" >> "$GITHUB_OUTPUT"
+              echo "ecr_repository=aws-terraform-infrastructure-python-app-dev" >> "$GITHUB_OUTPUT"
+              ;;
+            qa)
+              echo "app_env=qa" >> "$GITHUB_OUTPUT"
+              echo "aws_role_arn=arn:aws:iam::428516841589:role/github-actions-oidc-aws-terraform-infrastructure-qa" >> "$GITHUB_OUTPUT"
+              echo "ecr_repository=aws-terraform-infrastructure-python-app-qa" >> "$GITHUB_OUTPUT"
+              ;;
+            prod)
+              echo "app_env=prod" >> "$GITHUB_OUTPUT"
+              echo "aws_role_arn=arn:aws:iam::428516841589:role/github-actions-oidc-aws-terraform-infrastructure-prod" >> "$GITHUB_OUTPUT"
+              echo "ecr_repository=aws-terraform-infrastructure-python-app-prod" >> "$GITHUB_OUTPUT"
+              ;;
+            *)
+              echo "Unsupported environment"
+              exit 1
+              ;;
+          esac
+
       - name: Checkout repository
         uses: actions/checkout@v4
+
+      - name: Show selected environment
+        run: echo "Selected environment is ${{ steps.env-values.outputs.app_env }}"
 
       - name: Configure AWS credentials from GitHub OIDC
         uses: aws-actions/configure-aws-credentials@v6.0.0
         with:
           aws-region: ${{ env.AWS_REGION }}
-          role-to-assume: arn:aws:iam::428516841589:role/github-actions-oidc-aws-terraform-infrastructure-main
-          role-session-name: github-actions-ecr-rce-44
+          role-to-assume: ${{ steps.env-values.outputs.aws_role_arn }}
+          role-session-name: github-actions-ecr-rce-45
 
       - name: Show caller identity
         run: aws sts get-caller-identity
@@ -46,17 +91,22 @@ jobs:
       - name: Build Docker image
         env:
           REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-          IMAGE_TAG: ${{ github.sha }}
+          ECR_REPOSITORY: ${{ steps.env-values.outputs.ecr_repository }}
+          APP_ENV: ${{ steps.env-values.outputs.app_env }}
+          IMAGE_SHA: ${{ github.sha }}
         run: |
           docker build \
-            -t $REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG \
-            -t $REGISTRY/$ECR_REPOSITORY:latest \
+            --build-arg APP_ENV=$APP_ENV \
+            -t $REGISTRY/$ECR_REPOSITORY:$APP_ENV \
+            -t $REGISTRY/$ECR_REPOSITORY:$IMAGE_SHA \
             .
 
       - name: Push Docker image tags to Amazon ECR
         env:
           REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-          IMAGE_TAG: ${{ github.sha }}
+          ECR_REPOSITORY: ${{ steps.env-values.outputs.ecr_repository }}
+          APP_ENV: ${{ steps.env-values.outputs.app_env }}
+          IMAGE_SHA: ${{ github.sha }}
         run: |
-          docker push $REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
-          docker push $REGISTRY/$ECR_REPOSITORY:latest
+          docker push $REGISTRY/$ECR_REPOSITORY:$APP_ENV
+          docker push $REGISTRY/$ECR_REPOSITORY:$IMAGE_SHA
