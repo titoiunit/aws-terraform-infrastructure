@@ -20,7 +20,7 @@ jobs:
         with:
           aws-region: eu-west-1
           role-to-assume: arn:aws:iam::428516841589:role/github-oidc-aws-terraform-infrastructure-role
-          role-session-name: github-oidc-test
+          role-session-name: test-oidc
 
       - name: Verify who AWS thinks I am
         run: aws sts get-caller-identity
