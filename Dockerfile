@@ -8,6 +8,9 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY app.py .
 
+ARG APP_ENV=dev
+ENV APP_ENV=$APP_ENV
+
 EXPOSE 8080
 
 CMD ["gunicorn", "--bind", "0.0.0.0:8080", "app:app"]
