@@ -1,30 +1,32 @@
-# Terraform Modules
+# Terraform Module Boundary
 
-This folder contains reusable Terraform modules used by the infrastructure project.
+This directory is the starting point for reusable Terraform modules. It currently contains an interface scaffold (`variables.tf` and `outputs.tf`), not a finished catalogue of reusable resource modules.
 
-The goal of using modules is to keep infrastructure code organized, reusable, and easier to maintain.
+## Why keep this boundary
 
-## Why modules matter
+A module should represent a stable responsibility with a clear input/output contract — for example a VPC, ECR repository, ECS service, or secure storage bucket. Extracting a module too early can make a small Terraform project harder to understand, so this repository keeps the boundary visible while the implementation remains intentionally small.
 
-Terraform modules help avoid repeating the same infrastructure code in multiple places.
+## Module standard
 
-They make it easier to:
+Before a module is treated as reusable, it should have:
 
-- reuse infrastructure components
-- keep code cleaner
-- separate responsibilities
-- maintain larger infrastructure projects
+1. A focused purpose and documented inputs/outputs.
+2. No hard-coded environment identifiers or secrets.
+3. Version constraints and provider assumptions stated clearly.
+4. A simple example from an environment configuration.
+5. `terraform fmt` and `terraform validate` coverage in CI.
+6. Notes on security defaults, ownership, and destroy behaviour.
 
-## Example use cases
+## Planned use
 
-Modules can be used for resources such as:
+As the infrastructure grows, this directory can hold modules such as:
 
-- networking
-- compute
-- storage
-- security groups
-- application infrastructure
+```text
+modules/
+├── network/
+├── storage/
+├── ecr/
+└── application/
+```
 
-## Notes
-
-This project uses modules to practice production-style Terraform structure and Infrastructure as Code organization.
+Until then, the root `terraform/` configuration remains the source of truth for the implemented secure S3 state/storage example.
