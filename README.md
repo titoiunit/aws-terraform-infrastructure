@@ -1,144 +1,85 @@
 # AWS Terraform Infrastructure
 
-Production-style AWS infrastructure project focused on Terraform, CI/CD, Docker, Python automation, and cloud deployment best practices.
+A hands-on AWS delivery project combining Terraform, Docker, GitHub Actions and GitHub OIDC.
 
-## Overview
+The repository demonstrates how cloud infrastructure and application delivery can be kept repeatable, traceable and free from long-lived AWS credentials in CI/CD.
 
-This project demonstrates how AWS cloud infrastructure can be built, organized, and documented using Infrastructure as Code and modern DevOps practices.
+## What is implemented
 
-The goal of this repository is to show practical hands-on experience with AWS, Terraform, Docker, GitHub Actions, Python, and clean cloud project structure.
+| Area | Evidence |
+|---|---|
+| Terraform state | S3 remote backend with native lockfile support |
+| Secure storage baseline | Bucket versioning, public-access blocking and Bucket Owner Enforced ownership |
+| CI/CD authentication | GitHub Actions OIDC with short-lived IAM-role credentials |
+| Terraform delivery | Format, init, validate, plan and apply workflow |
+| Container delivery | Docker build and Amazon ECR publish workflow |
+| Traceability | Environment and commit-SHA image tags |
+| Environment structure | Explicit dev configuration plus dev/QA/prod workflow options |
 
-This is a portfolio project built to strengthen my cloud engineering skills and demonstrate how infrastructure can be created in a repeatable and maintainable way.
+## Delivery flow
 
-## What I built
-
-- AWS infrastructure using Terraform
-- Reusable Terraform module structure
-- Environment-based infrastructure organization
-- Dockerized Python application foundation
-- GitHub Actions workflow structure
-- Cloud deployment project layout
-- Documentation for infrastructure and deployment practice
-
-## Tech stack
-
-- AWS
-- Terraform
-- Docker
-- Python
-- GitHub Actions
-- Linux
-- CI/CD
-- Infrastructure as Code
-
-## Project structure
-
-```text
-.
-├── .github/workflows/     # GitHub Actions workflows
-├── environments/          # Environment-specific configurations
-├── modules/               # Reusable Terraform modules
-├── terraform/             # Terraform infrastructure code
-├── Dockerfile             # Docker build file
-├── app.py                 # Python application
-├── requirements.txt       # Python dependencies
-└── README.md
+```mermaid
+flowchart LR
+  P["Push or manual dispatch"] --> G["GitHub Actions"]
+  G --> O["OIDC token"]
+  O --> I["AWS IAM role"]
+  G --> D["Docker build"]
+  D --> E["Amazon ECR"]
+  G --> T["Terraform validation and apply"]
+  T --> S["S3 remote state"]
 ```
 
-## Why this project matters
+## Repository structure
 
-Cloud infrastructure should not be built manually every time through a web console.
+```text
+.github/workflows/     GitHub Actions: OIDC test, Terraform deploy, Docker → ECR
+terraform/             AWS provider, remote state and secure S3 baseline
+environments/dev/      Environment-specific provider configuration
+modules/               Reusable-module foundation
+Dockerfile             Container image definition
+app.py                 Python application entry point
+```
 
-Using Terraform and Infrastructure as Code makes infrastructure:
+## Security decisions
 
-- repeatable
-- easier to review
-- easier to document
-- easier to update
-- more consistent between environments
+- GitHub Actions uses `id-token: write` and assumes AWS IAM roles instead of storing access keys.
+- The Terraform state backend is remote; state files remain out of version control.
+- The S3 baseline enables versioning and blocks public access.
+- Image tags include the commit SHA, giving a durable deployment reference.
 
-This project shows my ability to think beyond individual cloud services and understand how infrastructure, automation, application deployment, and documentation work together.
+## Validation
 
-## Key learning areas
+The Terraform workflow performs:
 
-### Terraform and Infrastructure as Code
+```text
+terraform fmt → terraform init → terraform validate → terraform plan → terraform apply
+```
 
-This project helped me practice how to define cloud infrastructure as code instead of creating resources manually.
+The OIDC workflow verifies the assumed identity with `aws sts get-caller-identity`. The container workflow builds the image and publishes both environment and commit-SHA tags to ECR.
 
-Focus areas:
+## Run locally
 
-- Terraform project structure
-- reusable modules
-- environment separation
-- infrastructure configuration
-- repeatable deployment thinking
+```bash
+cd terraform
+terraform init
+terraform validate
+terraform plan
+```
 
-### AWS infrastructure
+Use AWS credentials with only the permissions required for the task. Never commit state, plans, credentials or local machine artifacts.
 
-The project is focused on building AWS infrastructure in a structured way.
+## Production-hardening next steps
 
-Focus areas:
+- Pull-request plan output and review before applies
+- Protected GitHub environments for QA and production
+- Explicit rollback and image-retention policies
+- Policy checks and cost estimation in CI
+- Reusable modules with tests and examples
 
-- cloud resources
-- deployment structure
-- infrastructure organization
-- AWS project workflow
+## Interview version
 
-### Docker and application deployment
-
-The repository includes a Dockerized Python application foundation to connect infrastructure work with real application deployment.
-
-Focus areas:
-
-- Dockerfile structure
-- Python application packaging
-- container-based deployment thinking
-
-### CI/CD foundation
-
-The project includes GitHub Actions workflow structure to support automated checks and deployment practices.
-
-Focus areas:
-
-- automation
-- deployment workflow thinking
-- GitHub Actions structure
-- DevOps best practices
-
-## Security and cost notes
-
-This repository is built for learning and portfolio purposes.
-
-Important principles:
-
-- do not commit secrets
-- do not commit Terraform state files
-- do not commit local generated files
-- use `.gitignore` for local and sensitive files
-- destroy cloud resources after testing to avoid unnecessary costs
-
-## What I learned
-
-Through this project, I practiced:
-
-- how to structure a cloud infrastructure repository
-- how Terraform supports repeatable infrastructure
-- how Docker connects application code to cloud deployment
-- how CI/CD fits into cloud engineering workflows
-- how to document technical work clearly
-- how to think in a more production-style cloud engineering way
-
-## Future improvements
-
-Possible next improvements:
-
-- add clearer architecture diagrams
-- improve Terraform module documentation
-- add deployment screenshots
-- add GitHub Actions pipeline examples
-- add cost estimation notes
-- add cleanup proof after testing
+> I built this project to connect Terraform, Docker and GitHub Actions into a secure AWS delivery workflow. The key decision was OIDC, so GitHub assumes short-lived AWS roles instead of using stored credentials. The pipeline validates Terraform, publishes traceable ECR image tags and keeps state remote and locked. The next production step is PR planning and protected environments.
 
 ## Status
 
-Active portfolio project for hands-on AWS, Terraform, Docker, Python, and DevOps practice.
+Active hands-on Cloud & DevOps project. The implemented workflows and infrastructure are linked above; future production controls are clearly identified rather than presented as complete.
