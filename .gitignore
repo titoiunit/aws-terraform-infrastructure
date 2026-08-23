@@ -1,5 +1,14 @@
 # Terraform
+.terraform/
 *.tfstate
 *.tfstate.*
-.terraform/
-.terraform.lock.hcl
+tfplan
+*.tfplan
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+
+# Local operating-system files
+.DS_Store
