@@ -19,9 +19,9 @@ module "secure_s3" {
   bucket_name = var.bucket_name
 
   tags = {
-    Project     = "aws-terraform-infrastructure"
-    Environment = "dev"
-    ManagedBy   = "terraform"
+    Project       = "aws-terraform-infrastructure"
+    Environment   = "dev"
+    ManagedBy     = "terraform"
     Configuration = "environments/dev"
   }
 }
