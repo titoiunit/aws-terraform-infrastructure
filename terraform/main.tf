@@ -8,6 +8,7 @@ module "secure_s3" {
   bucket_name = "428516841589-aws-terraform-infrastructure-demo-eu-west-1"
 
   tags = {
+    Name        = "rce-43-demo-bucket"
     Project     = "aws-terraform-infrastructure"
     Environment = "dev"
     ManagedBy   = "terraform"
