@@ -1,10 +1,10 @@
 # Terraform Environments
 
-This directory separates configuration that is specific to an environment from reusable Terraform code.
+This directory separates environment-specific composition and values from the reusable module under `modules/`.
 
 ## Current state
 
-Only `dev/` is currently implemented. It contains the variables, outputs, and configuration used for the development environment.
+Only `dev/` is implemented. It is a runnable Terraform root that calls the secure S3 module with development-specific inputs and exposes the resulting bucket name and ARN.
 
 ```text
 environments/
@@ -15,25 +15,28 @@ environments/
     └── dev.tfvars
 ```
 
-`staging/` and `prod/` are intentionally not present yet. They should be added only when there is a real configuration, access-control, or release-process difference to demonstrate — not just to make the repository look larger.
+The canonical CI-managed configuration remains under `terraform/`. The development example uses a different bucket name and separate state so that the two Terraform roots do not attempt to manage the same object.
+
+`staging/` and `prod/` are intentionally not present. Add them only when a real configuration, access-control or release-process difference exists.
 
 ## When adding another environment
 
 - Use a separate remote-state key per environment.
-- Keep credentials and secrets out of `.tfvars` files committed to Git.
+- Keep credentials and secrets out of committed `.tfvars` files.
 - Document which inputs differ from `dev` and why.
 - Protect production changes with review and an explicit plan/apply process.
-- Keep modules provider-agnostic where practical and pass environment-specific values from this layer.
+- Pass environment-specific values into reusable modules rather than hard-coding them inside modules.
 
 ## Validation
 
-Run the Terraform checks from the relevant environment context and review the plan before applying:
+Run checks from the relevant environment directory and review the plan before applying:
 
 ```bash
+cd environments/dev
 terraform fmt -check -recursive
 terraform init
 terraform validate
 terraform plan -var-file=dev.tfvars
 ```
 
-The CI workflows at the repository root are the canonical automation reference.
+The GitHub Actions workflows at the repository root remain the canonical automation reference.
