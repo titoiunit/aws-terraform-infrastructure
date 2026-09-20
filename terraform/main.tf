@@ -2,11 +2,12 @@ provider "aws" {
   region = "eu-west-1"
 }
 
-resource "aws_s3_bucket" "demo" {
-  bucket = "428516841589-aws-terraform-infrastructure-demo-eu-west-1"
+module "secure_s3" {
+  source = "../modules"
+
+  bucket_name = "428516841589-aws-terraform-infrastructure-demo-eu-west-1"
 
   tags = {
-    Name        = "rce-43-demo-bucket"
     Project     = "aws-terraform-infrastructure"
     Environment = "dev"
     ManagedBy   = "terraform"
@@ -14,27 +15,22 @@ resource "aws_s3_bucket" "demo" {
   }
 }
 
-resource "aws_s3_bucket_versioning" "demo" {
-  bucket = aws_s3_bucket.demo.id
-
-  versioning_configuration {
-    status = "Enabled"
-  }
+moved {
+  from = aws_s3_bucket.demo
+  to   = module.secure_s3.aws_s3_bucket.this
 }
 
-resource "aws_s3_bucket_public_access_block" "demo" {
-  bucket = aws_s3_bucket.demo.id
-
-  block_public_acls       = true
-  block_public_policy     = true
-  ignore_public_acls      = true
-  restrict_public_buckets = true
+moved {
+  from = aws_s3_bucket_versioning.demo
+  to   = module.secure_s3.aws_s3_bucket_versioning.this
 }
 
-resource "aws_s3_bucket_ownership_controls" "demo" {
-  bucket = aws_s3_bucket.demo.id
+moved {
+  from = aws_s3_bucket_public_access_block.demo
+  to   = module.secure_s3.aws_s3_bucket_public_access_block.this
+}
 
-  rule {
-    object_ownership = "BucketOwnerEnforced"
-  }
+moved {
+  from = aws_s3_bucket_ownership_controls.demo
+  to   = module.secure_s3.aws_s3_bucket_ownership_controls.this
 }
