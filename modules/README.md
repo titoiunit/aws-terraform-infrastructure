@@ -1,32 +1,42 @@
-# Terraform Module Boundary
+# Secure S3 Terraform Module
 
-This directory is the starting point for reusable Terraform modules. It currently contains an interface scaffold (`variables.tf` and `outputs.tf`), not a finished catalogue of reusable resource modules.
+This directory contains the reusable secure-storage module used by both the canonical Terraform root and the development-environment example.
 
-## Why keep this boundary
+## Security defaults
 
-A module should represent a stable responsibility with a clear input/output contract — for example a VPC, ECR repository, ECS service, or secure storage bucket. Extracting a module too early can make a small Terraform project harder to understand, so this repository keeps the boundary visible while the implementation remains intentionally small.
+The module creates an S3 bucket with:
 
-## Module standard
+- versioning enabled
+- all public-access controls enabled
+- Bucket Owner Enforced object ownership
+- caller-provided tags plus a consistent `Name` tag
 
-Before a module is treated as reusable, it should have:
+## Inputs
 
-1. A focused purpose and documented inputs/outputs.
-2. No hard-coded environment identifiers or secrets.
-3. Version constraints and provider assumptions stated clearly.
-4. A simple example from an environment configuration.
-5. `terraform fmt` and `terraform validate` coverage in CI.
-6. Notes on security defaults, ownership, and destroy behaviour.
+| Name | Description | Required |
+|---|---|---:|
+| `bucket_name` | Globally unique S3 bucket name | Yes |
+| `tags` | Additional resource tags | No |
 
-## Planned use
+## Outputs
 
-As the infrastructure grows, this directory can hold modules such as:
+- `bucket_name`
+- `bucket_arn`
 
-```text
-modules/
-├── network/
-├── storage/
-├── ecr/
-└── application/
+## Example
+
+```hcl
+module "secure_s3" {
+  source = "../../modules"
+
+  bucket_name = var.bucket_name
+
+  tags = {
+    Project     = "aws-terraform-infrastructure"
+    Environment = "dev"
+    ManagedBy   = "terraform"
+  }
+}
 ```
 
-Until then, the root `terraform/` configuration remains the source of truth for the implemented secure S3 state/storage example.
+The canonical configuration under `terraform/` also uses this module. Terraform `moved` blocks preserve the existing resource addresses during the transition from inline resources to the module.

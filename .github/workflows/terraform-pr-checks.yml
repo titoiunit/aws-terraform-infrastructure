@@ -1,0 +1,48 @@
+name: Terraform PR Checks
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "terraform/**"
+      - "modules/**"
+      - "environments/**"
+      - ".github/workflows/terraform-pr-checks.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  terraform-checks:
+    name: Format and validate Terraform
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v4
+        with:
+          terraform_version: 1.14.6
+          terraform_wrapper: false
+
+      - name: Check Terraform formatting
+        run: terraform fmt -check -recursive
+
+      - name: Initialize canonical configuration without backend
+        working-directory: terraform
+        run: terraform init -backend=false -input=false -no-color
+
+      - name: Validate canonical configuration
+        working-directory: terraform
+        run: terraform validate -no-color
+
+      - name: Initialize dev configuration without backend
+        working-directory: environments/dev
+        run: terraform init -backend=false -input=false -no-color
+
+      - name: Validate dev configuration
+        working-directory: environments/dev
+        run: terraform validate -no-color
