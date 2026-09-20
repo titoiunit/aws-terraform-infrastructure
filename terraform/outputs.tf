@@ -1,7 +1,9 @@
 output "demo_bucket_name" {
-  value = aws_s3_bucket.demo.bucket
+  description = "Name of the secure demonstration bucket"
+  value       = module.secure_s3.bucket_name
 }
 
 output "demo_bucket_arn" {
-  value = aws_s3_bucket.demo.arn
+  description = "ARN of the secure demonstration bucket"
+  value       = module.secure_s3.bucket_arn
 }
