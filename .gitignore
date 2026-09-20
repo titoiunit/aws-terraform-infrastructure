@@ -4,6 +4,7 @@
 *.tfstate.*
 tfplan
 *.tfplan
+backend.hcl
 
 # Python
 __pycache__/
